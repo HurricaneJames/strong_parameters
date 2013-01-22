@@ -312,4 +312,24 @@ class NestedParametersTest < ActiveSupport::TestCase
     assert_filtered_out permitted[:entry_form][:user_responses_attributes]['first_name'], :strip_me
   end
 
+  test "acceptes_nested_attributes_for_style_nested_params no keys" do
+    params = ActionController::Parameters.new({
+      :entry_form => {
+        :user_responses_attributes => [
+          { :response => 'William',     :entry_field_id => '52', :stip_me => 'Dali' },
+          { :response => 'Shakespeare', :entry_field_id => '27' },
+          { :response => %w(this bad phone number should be stripped), :entry_field_id => '16' }
+        ]
+      }
+    })
+    permitted = params.permit :entry_form => { :user_responses_attributes => [ :response, :entry_field_id ] }
+    
+    assert_not_nil permitted[:entry_form][:user_responses_attributes][0]
+    assert_not_nil permitted[:entry_form][:user_responses_attributes][1]
+    assert_equal 'William',     permitted[:entry_form][:user_responses_attributes][0][:response]
+    assert_equal 'Shakespeare', permitted[:entry_form][:user_responses_attributes][1][:response]
+    
+    assert_filtered_out permitted[:entry_form][:user_responses_attributes][2], :response
+    assert_filtered_out permitted[:entry_form][:user_responses_attributes][0], :strip_me
+  end
 end
