@@ -167,7 +167,7 @@ module ActionController
             array_of_permitted_scalars_filter(params, key)
           else
             # Declaration {:user => :name} or {:user => [:name, :age, {:adress => ...}]}.
-            params[key] = each_element(value) do |element|
+            params[key] = each_element(key, value) do |element|
               if element.is_a?(Hash)
                 element = self.class.new(element) unless element.respond_to?(:permit)
                 element.permit(*Array.wrap(filter[key]))
@@ -177,11 +177,11 @@ module ActionController
         end
       end
 
-      def each_element(value)
+      def each_element(key, value)
         if value.is_a?(Array)
           value.map { |el| yield el }.compact
-          # fields_for on an array of records uses numeric hash keys.
-        elsif value.is_a?(Hash) && value.keys.all? { |k| k =~ /\A-?\d+\z/ }
+        # fields_for on an array of records will label the key as fields_attributes
+        elsif value.is_a?(Hash) && key =~ /_attributes$/
           hash = value.class.new
           value.each { |k,v| hash[k] = yield v }
           hash
